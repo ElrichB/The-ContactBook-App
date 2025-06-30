@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Add Contact</title>
+  </head>
+  <body>
+    <br/>
+    <form id="addForm">
+      <label for="firstname">First name</label>
+      <input type="text" name="firstname" id="firstname" required /><br/>
+
+      <label for="lastname">Last name</label>
+      <input type="text" name="lastname" id="lastname" required /><br/>
+
+      <label for="mobile">Mobile</label>
+      <input type="text" name="mobile" id="mobile" required /><br/>
+
+      <label for="email">Email</label>
+      <input type="email" name="email" id="email" required /><br/>
+
+      <label for="avatar">Select a file</label><br/>
+      <input type="file" name="avatar" id="avatar" /><br/>
+
+      <button type="submit" id="submitForm">Submit</button>
+    </form>
+    <br/>
+    <button id="homeLink" type="button">Home</button>
+
+    <script src="config.js"></script>
+    <script>
+      // Wire up form submit and home button
+      document
+        .getElementById("addForm")
+        .addEventListener("submit", submitForm);
+      document
+        .getElementById("homeLink")
+        .addEventListener("click", homeLink);
+
+      function submitForm(e) {
+        e.preventDefault();
+
+        // Pull API key from localStorage
+        const apiKey = localStorage.getItem("apiKey");
+        if (!apiKey) {
+          alert("Missing API key. Please re-enter it.");
+          return homeLink();
+        }
+
+        // Build FormData and append apiKey
+        const form = new FormData(document.getElementById("addForm"));
+        form.append("apiKey", apiKey);
+
+        fetch(rootPath + "controller/insert-contact/", {
+          method: "POST",
+          headers: { Accept: "application/json, */*" },
+          body: form,
+        })
+          .then((res) => res.text())
+          .then((data) => {
+            alert(data === "1" ? "Contact added." : data);
+            homeLink();
+          })
+          .catch((err) => {
+            console.error("Add contact error:", err);
+            alert("Network error. Try again later.");
+          });
+      }
+
+      function homeLink() {
+        window.open("index.html", "_self");
+      }
+    </script>
+  </body>
+</html>

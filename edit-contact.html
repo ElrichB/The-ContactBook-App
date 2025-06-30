@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Edit Contact</title>
+  </head>
+  <body onload="fetchContact()">
+    <div id="avatarImage"></div>
+
+    <!-- Wrap inputs in a form so FormData can pick them up -->
+    <form id="editForm">
+      <div>
+        <label for="firstname">First name</label>
+        <input type="text" name="firstname" id="firstname" readonly /><br/>
+
+        <label for="lastname">Last name</label>
+        <input type="text" name="lastname" id="lastname" readonly /><br/>
+
+        <label for="email">Email</label>
+        <input type="text" name="email" id="email" readonly /><br/>
+
+        <label for="mobile">Mobile</label>
+        <input type="text" name="mobile" id="mobile" readonly /><br/>
+
+        <label for="avatar">Avatar</label>
+        <input
+          type="file"
+          name="avatar"
+          id="avatar"
+          onchange="previewImage(event)"
+          hidden
+        /><br/>
+
+        <label>Change profile image</label><br/>
+
+        <!-- Renamed to match JS binding -->
+        <input type="submit" id="submitForm" hidden />
+      </div>
+    </form>
+
+    <br /><br />
+    <button id="homeLink" type="button">Home</button>
+    <button id="editContact" type="button">Edit</button>
+    <button id="deleteContact" type="button">Delete</button>
+
+    <script src="config.js"></script>
+    <script>
+      // 1) Grab ID from URL
+      const id = getId();
+
+      // 2) Wire up buttons
+      document.getElementById("homeLink").addEventListener("click", homeLink);
+      document.getElementById("editContact").addEventListener("click", editContact);
+      document.getElementById("deleteContact").addEventListener("click", deleteContact);
+      document.getElementById("submitForm").addEventListener("click", submitForm);
+
+      // 3) Load contact data on page load
+      function fetchContact() {
+        fetch(rootPath + "controller/get-contact/?id=" + id)
+          .then((res) => res.json())
+          .then((data) => displayOutput(data))
+          .catch((err) => console.error("Fetch contact error:", err));
+      }
+
+      function getId() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("id");
+      }
+
+      function displayOutput(data) {
+        // data is an array; take the first item
+        const contact = data[0];
+        // show avatar
+        document.getElementById(
+          "avatarImage"
+        ).innerHTML = `<img src="${rootPath}controller/uploads/${contact.avatar}" width="200"/>`;
+
+        // fill form fields
+        document.getElementById("firstname").value = contact.firstname;
+        document.getElementById("lastname").value = contact.lastname;
+        document.getElementById("email").value = contact.email;
+        document.getElementById("mobile").value = contact.mobile;
+      }
+
+      function homeLink() {
+        window.open("index.html", "_self");
+      }
+
+      function editContact() {
+        // enable editing
+        ["firstname", "lastname", "email", "mobile"].forEach((field) => {
+          document.getElementById(field).readOnly = false;
+        });
+        document.getElementById("avatar").hidden = false;
+        document.getElementById("submitForm").hidden = false;
+      }
+
+      function submitForm(e) {
+        e.preventDefault();
+        const form = new FormData(document.querySelector("#editForm"));
+        form.append("apiKey", localStorage.getItem("apiKey"));
+        form.append("id", id);
+
+        fetch(rootPath + "controller/edit-contact/", {
+          method: "POST",
+          headers: { Accept: "application/json, */*" },
+          body: form,
+        })
+          .then((res) => res.text())
+          .then((data) => {
+            alert(data === "1" ? "Contact edited." : data);
+            homeLink();
+          })
+          .catch((err) => console.error("Edit error:", err));
+      }
+
+      function deleteContact() {
+        if (!confirm("Delete contact. Are you sure?")) return;
+        fetch(rootPath + "controller/delete-contact/?id=" + id)
+          .then((res) => res.text())
+          .then((data) => {
+            if (data === "1") homeLink();
+            else alert(data);
+          })
+          .catch((err) => console.error("Delete error:", err));
+      }
+
+      // 4) Preview image when a new file is chosen
+      function previewImage(event) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          document.getElementById(
+            "avatarImage"
+          ).innerHTML = `<img src="${reader.result}" width="200"/>`;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+      }
+    </script>
+  </body>
+</html>

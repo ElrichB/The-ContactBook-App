@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Contact Book</title>
+</head>
+<body onload="fetchContacts()">
+  <div id="table">Contacts loading...</div>
+  <button id="refresh" type="button">Refresh</button>
+  <button id="addContact" type="button">Add Contact</button>
+
+  <!-- your rootPath lives here -->
+  <script src="config.js"></script>
+
+  <script>
+    // wire up buttons
+    document.getElementById("refresh")
+            .addEventListener("click", fetchContacts);
+    document.getElementById("addContact")
+            .addEventListener("click", addContact);
+
+    // 1) Define fetchContacts (you were calling it onload, but it didn't exist)
+    function fetchContacts() {
+      fetch(rootPath + "controller/get-contacts/")
+        .then(response => response.json())
+        .then(data => displayOutput(data))
+        .catch(error => console.error("Fetch error:", error));
+    }
+
+    // 2) Build the table—quotes and template literals fixed
+    function displayOutput(data) {
+      let output = "<table>";
+      data.forEach(contact => {
+        output += `
+          <tr onclick="editContact(${contact.id})">
+            <td>
+              <img src="${rootPath}controller/uploads/${contact.avatar}" width="40"/>
+            </td>
+            <td><h5>${contact.firstname}</h5></td>
+            <td><h5>${contact.lastname}</h5></td>
+          </tr>`;
+      });
+      output += "</table>";
+      document.getElementById("table").innerHTML = output;
+    }
+
+    // 3) Navigation helpers (unchanged)
+    function addContact() {
+      window.open("add-contact.html", "_self");
+    }
+
+    function editContact(id) {
+      window.open("edit-contact.html?id=" + id, "_self");
+    }
+  </script>
+</body>
+</html>
